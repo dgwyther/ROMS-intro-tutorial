@@ -47,7 +47,7 @@ Deepak Cherian's 'Living with ROMS'
    cd ROMS_example
    ```
 
-or for the ice shelf version, we could get the version from Ben's github (`bkgf` at github):
+   or for the ice shelf version, we could get the version from Ben's github (`bkgf` at github):
 
    ```bash
    git clone git@github.com:bkgf/ROMSIceShelf.git ROMS_example
@@ -70,14 +70,26 @@ or for the ice shelf version, we could get the version from Ben's github (`bkgf`
 
    Use this to view differences between your files and the repository.
 
----
+   Let's try modifying a file to see how it looks with git:
+
+
+   ```bash
+   echo "testing" >> testfile
+   cat testfile
+   ```   
+   Now what does git say?
+   ```bash
+   git status
+   ```
+   
+  ---
 
 ## 3. ROMS Folder Structure
 
 The ROMS repository is organized as follows:
 
 - **ROMS/**: Contains the main source code for the ocean model.
-- **Functionals/**: Houses libraries and auxiliary functions used throughout ROMS.
+- **Functionals/**: Houses libraries and auxiliary functions used for (mainly) setting up *analytic* forcing.
 - **External/**: Contains input files, test cases, and example setups for users to explore.
 - **Include/**: Contains configuration header files (e.g., `cppdefs.h`).
 - **Nonlinear/**: Code modules specifically for nonlinear simulations.
@@ -102,26 +114,27 @@ ls -R ROMS
    ```
 
    Key sections:
-   - Compiler settings (`FORT`, `CC`).
+   - Which application? Set this to decide which cppdef.h to use.
    - Flags for debugging and optimization.
-   - Paths to required libraries.
+   - Parallel or serial?
+   - Which compiler?
+   - Paths to required libraries - need to set paths to netcdf installs.
 
-### Setting the Compiler
+### Setting the Compiler & checking netcdf versions
 
 Ensure you are using the appropriate compiler for your system. For example:
 
 ```bash
-export FORT=gfortran
-export CC=gcc
+module avail "intel"
+module avail "gcc"
 ```
 
-To confirm the compilers are available:
-
+Now look for which netcdf versions:
 ```bash
-gfortran --version
-gcc --version
+module avail "netcdf"
 ```
 
+Both the compiler and netcdf need to be loaded in order to compile and run.
 ---
 
 ## 5. Compile and Run ROMS
@@ -134,12 +147,29 @@ gcc --version
    make
    ```
 
+   To speed up compilation, we can parallelise the compilation:
+   
+   ```bash
+   make -j 8
+   ```
+   Will compile across 8 nodes (faster).
+
+   We might also want to do a clean compile, that is, by deleting the previous compiled version and starting from scratch:
+   ```bash
+   make -j 8 -clean
+   ```
+
    If there are errors, refer to the log output and cross-check your configuration files.
 
-2. **Run the model**:
-
+1. **Run the model**:
+   In serial:
    ```bash
-   ./oceanM ocean.in
+   ./romsS < path/to/the/*.in
+   ```
+
+   In parallel:
+   ```bash
+   mpirun romsM path/to/the/*.in
    ```
 
    Monitor the terminal output to confirm the simulation is running as expected.
@@ -157,9 +187,10 @@ Basic commands for `vi`/`vim`:
   vi filename.F
   ```
 - **Enter Insert Mode**: Press `i`.
-- **Save and Exit**: Press `Esc`, then type `:wq`.
-- **Exit Without Saving**: Press `Esc`, then type `:q!`.
+- **Save and Exit**: Press `Esc`, then type `:wq`. The `wq` stands for 'write and quit'
+- **Exit Without Saving**: Press `Esc`, then type `:q!`. The 'q!' stands for 'quit damnit, and don''t save!'
 - **Search for a string**: Press `/`, type the string, and press `Enter`.
+- **Jump to a line number"": Press `:X`, where `X` is the line number and press enter.
 
 Practice by opening and editing `cppdefs.h` or a `.in` file.
 
@@ -176,6 +207,11 @@ Practice by opening and editing `cppdefs.h` or a `.in` file.
    ```
 
    Look for error messages or warnings to identify issues in the simulation.
+   Other valuable information:
+   - What is the model computed `rx0` and `rx1`.
+   - How well obeyed is the CFL criterion?
+   - What model forcing (boundary, initial, etc) is being loaded?
+   - What settings did we define?
 
 ### Restart and History Files
 
@@ -225,7 +261,15 @@ Time-stepping controls in `ocean.in`:
 
 - `DT`: Timestep size in seconds.
 - `NTIMES`: Total number of timesteps.
-- `NDTFAST`: Number of fast-mode sub-timesteps.
+- `NDTFAST`: Number of fast-mode sub-timesteps. The fast time step is calculated as `DT/NDTFAST`.
+- `NHIS`: How many timesteps between writing of history to output history file.
+- `NDEFHIS`: This is the total number of snapshot histories to save to the history file, before a new history file is defined.
+
+Grid Smoothness Parameters: rx0 and rx1
+
+- rx0: This parameter measures the steepness of the grid bathymetry. It is a non-dimensional metric used to quantify the topographic slope in the model grid. Values below 0.7~0.8 are generally recommended for numerical stability.
+
+- rx1: This parameter quantifies the local bathymetry variation between adjacent grid cells. Lower values (typically less than 5) indicate smoother transitions and help maintain numerical accuracy, but I've run it with VERY much larger values (up to 200-300).
 
 ---
 
