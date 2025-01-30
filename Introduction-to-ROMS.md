@@ -34,6 +34,10 @@ Deepak Cherian's 'Living with ROMS'
 - Not an official document, but still very nice.
 - It is more of a guidebook with ears of ROMS wisdom put into it. I suspect it was written out of frustration of weird ROMS things, and so it has lots of practical 'set this to this in order for it to work'.
 
+Kevin Rosa's ROMS notes
+- **URL**: [Kevin Rosa's ROMS notes](https://gist.github.com/kevinrosa/4a51c4040b5a82d665b48a558b980db6)
+- Another collection of random ROMS tips.
+  
 ---
 
 ## 2. How to Get ROMS
